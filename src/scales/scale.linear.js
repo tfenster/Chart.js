@@ -83,7 +83,41 @@ module.exports = function(Chart) {
 						}, this);
 					}
 				}, this);
+				
+				helpers.each(this.chart.data.datasets, function(dataset, datasetIndex) {
+					var meta = this.chart.getDatasetMeta(datasetIndex);
+					
+					var positiveValues = valuesPerType[meta.type].positiveValues;
+					var negativeValues = valuesPerType[meta.type].negativeValues;
+					if (this.chart.isDatasetVisible(datasetIndex) && (this.isHorizontal() ? meta.xAxisID === this.id : meta.yAxisID === this.id)) {
+						helpers.each(dataset.data, function(rawValue, index) {
+							var value = +this.getRightValue(rawValue);
+							if (isNaN(value) || meta.data[index].hidden || dataset.fill) {
+								return;
+							}
+							
+							positiveValues[index] = positiveValues[index] || 0;
+							negativeValues[index] = negativeValues[index] || 0;
 
+							if (this.options.relativePoints) {
+								positiveValues[index] = 100;
+							} else {
+								if (value < 0) {
+									hasNegativeValues = true;
+									if (value < negativeValues[index]) {
+										negativeValues[index] = value;
+									}
+								} else {
+									hasPositiveValues = true;
+									if (value > positiveValues[index]) {
+										positiveValues[index] = value;
+									}
+								}
+							}
+						}, this);
+					}
+				}, this);
+				
 				helpers.each(valuesPerType, function(valuesForType) {
 					var values = valuesForType.positiveValues.concat(valuesForType.negativeValues);
 					var minVal = helpers.min(values);
